@@ -7,10 +7,9 @@
 int main()
 {
     int op, id_busca;
-    char buffer[1024];
-    char field[512];
-    char *campo;
-    char id[4];
+    char buffer[1024], cadastro[512];
+    char *field;
+    char id[512];
 
     int server_socket;
     struct sockaddr_in server_addr;
@@ -40,19 +39,6 @@ int main()
         exit(EXIT_FAILURE);
     }
     printf("Servidor conectado\n");
-    // send message
-    // bzero(buffer, 1024); // zera o buffer
-    // strcpy(buffer, "test");
-    // printf("Client Message: %s\n", buffer);
-    // send(server_socket, buffer, strlen(buffer), 0);
-
-    // // receive response
-    // bzero(buffer, 1024);
-    // recv(server_socket, buffer, sizeof(buffer), 0);
-    // printf("Server Response: %s\n", buffer);
-
-    // close(server_socket);
-    // printf("Server disconnected\n");
 
     char *buscar = "buscar";
     char *cadastrar = "cadastrar";
@@ -66,127 +52,123 @@ int main()
         printf("3 - sair\n");
         printf("==========================\n");
         printf("Insira a opcao: ");
+        fflush(stdin);
         scanf("%d", &op);
         fgetc(stdin);
-        fflush(stdin);
-        switch (op)
+        if (op == 1)
         {
-        case 1: // Buscar
             if (send(server_socket, buscar, strlen(buscar), 0) < 0)
             {
                 perror("Falha ao enviar requisicao\n");
                 exit(EXIT_FAILURE);
             }
 
+            bzero(server_response, 1024);
             if (recv(server_socket, server_response, 1024, 0) < 0)
             {
-                printf("falhou\n");
+                printf("Falha ao receber resposta\n");
                 break;
             }
 
             printf("%s\n", server_response);
-            printf("%d\n", strcmp(server_response, "Entre com o id a ser buscado: "));
-            if (!strcmp(server_response, "Entre com o id a ser buscado: "))
+
+            if (!strcmp(server_response, "Digite o id do cadastro a ser buscado: "))
             {
-                bzero(server_response, 1024);
-                fflush(stdin);
-                fgets(id, 4, stdin);
+                bzero(id, 512);
+                fgets(id, 512, stdin);
+
                 if (send(server_socket, id, strlen(id), 0) < 0)
                 {
                     perror("Falha ao enviar requisicao\n");
                     exit(EXIT_FAILURE);
                 }
 
+                bzero(server_response, 1024);
                 if (recv(server_socket, server_response, 1024, 0) < 0)
                 {
-                    puts("recv falhou\n");
+                    perror("Falha ao receber resposta\n");
                     break;
                 }
 
-                bzero(id, 4);
-
-                // puts(server_response);
-                printf("\n");
-                campo = strtok(server_response, "|");
-                printf("Id: %s\n", campo);
-                campo = strtok(NULL, "|");
-                printf("Nome: %s\n", campo);
-                campo = strtok(NULL, "|");
-                printf("Sobrenome: %s\n", campo);
-                campo = NULL;
-                bzero(server_response, 1024);
+                if (!strcmp(server_response, "Cadastro nao encontrado"))
+                {
+                    printf("%s\n", server_response);
+                }
+                else
+                {
+                    field = strtok(server_response, "|");
+                    printf("Id: %s\n", field);
+                    field = strtok(NULL, "|");
+                    printf("Nome: %s\n", field);
+                    field = strtok(NULL, "|");
+                    printf("Sobrenome: %s\n", field);
+                    field = NULL;
+                    bzero(server_response, 1024);
+                }
             }
-            break;
-
-        case 2:
-            printf("fon1\n");
+        }
+        else if (op == 2)
+        {
             if (send(server_socket, cadastrar, strlen(cadastrar), 0) < 0)
             {
                 perror("Falha ao enviar requisicao\n");
                 exit(EXIT_FAILURE);
             }
+
             bzero(server_response, 1024);
             if (recv(server_socket, server_response, 1024, 0) < 0)
             {
-                printf("falhou\n");
+                printf("Falha ao receber resposta\n");
                 break;
             }
 
-            printf("|%s|\n", server_response);
-            printf("|%d|\n", strcmp(server_response, "Entre com o id a ser cadastrado: "));
-            if (!strcmp(server_response, "Entre com o id a ser cadastrado: "))
-            {
+            printf("%s\n", server_response);
 
-                bzero(server_response, 1024);
+            if (!strcmp(server_response, "Digite o id do cadastro a ser registrado: "))
+            {
                 bzero(buffer, 1024);
 
-                fflush(stdin);
+                fgets(cadastro, 512, stdin);
+                cadastro[strlen(cadastro) - 1] = '\0';
+                strcat(buffer, cadastro);
 
-                fgets(field, 4, stdin);
-                printf("%s\n", field);
-                field[strlen(field) - 1] = '\0';
-                strcat(buffer, field);
-                bzero(field, 512);
-
-                printf("Entre com o nome: \n");
-                fflush(stdin);
-                fgets(field, 512, stdin);
-                field[strlen(field) - 1] = '\0';
+                printf("Digite o nome: \n");
+                fgets(cadastro, 512, stdin);
+                cadastro[strlen(cadastro) - 1] = '\0';
                 strcat(buffer, "|");
-                strcat(buffer, field);
-                bzero(field, 512);
+                strcat(buffer, cadastro);
 
-                printf("Entre com o sobrenome: \n");
-                fflush(stdin);
-                fgets(field, 512, stdin);
-                field[strlen(field) - 1] = '\0';
+                printf("Digite o sobrenome: \n");
+                fgets(cadastro, 512, stdin);
+                cadastro[strlen(cadastro) - 1] = '\0';
                 strcat(buffer, "|");
-                strcat(buffer, field);
-                bzero(field, 512);
-
+                strcat(buffer, cadastro);
+                
                 if (send(server_socket, buffer, strlen(buffer), 0) < 0)
                 {
                     perror("Falha ao enviar requisicao\n");
                     exit(EXIT_FAILURE);
                 }
 
+                bzero(server_response, 1024);
                 if (recv(server_socket, server_response, 1024, 0) < 0)
                 {
-                    printf("recv falhou\n");
+                    printf("Falha ao receber resposta\n");
                     break;
                 }
-                b17(buffer, 1024);
+
                 printf("%s\n", server_response);
-                b17(server_response, 1024);
+
+                bzero(buffer, 1024);
+                bzero(server_response, 1024);
             }
-
-            break;
-
-        case 3:
+        }
+        else if (op == 3)
+        {
             printf("Saindo\n");
-            break;
-
-        default:
+        }
+        else
+        {
             printf("Opcao Invalida\n");
         }
     } while (op != 3);
